@@ -1,0 +1,25 @@
+services:
+  cube:
+    image: cubejs/cube:latest
+    container_name: metricmind_cube
+
+    ports:
+      - "4000:4000"
+
+    environment:
+      CUBEJS_DEV_MODE: "true"
+      CUBEJS_API_SECRET: "metricmind_secret"
+
+      CUBEJS_DB_TYPE: "snowflake"
+      CUBEJS_DB_USER: "ABDULRAHIMANNN"
+      CUBEJS_DB_PASS: "MetricMind@123"
+      CUBEJS_DB_NAME: "METRICMIND_DB"
+
+      CUBEJS_DB_SNOWFLAKE_ACCOUNT: "SG30480"
+      CUBEJS_DB_SNOWFLAKE_REGION: "central-india.azure"
+      CUBEJS_DB_SNOWFLAKE_SCHEMA: "ANALYTICS"
+      CUBEJS_DB_SNOWFLAKE_WAREHOUSE: "COMPUTE_WH"
+      CUBEJS_DB_SNOWFLAKE_ROLE: "ACCOUNTADMIN"
+
+    volumes:
+      - .:/cube/conf
