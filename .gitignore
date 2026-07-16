@@ -39,3 +39,24 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+# -------------------------
+# MetricMind
+# -------------------------
+
+# Cube Store
+.cubestore/
+
+# Snowflake log
+snowflake.log
+
+# Cache
+.cache/
+
+# Build output
+dist/
+
+# Vite
+.vite/
+
+# Docker
+*.pid
