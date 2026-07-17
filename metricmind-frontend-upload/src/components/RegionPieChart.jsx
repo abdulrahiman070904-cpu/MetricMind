@@ -14,22 +14,7 @@ ChartJS.register(
   Legend
 );
 
-function RegionPieChart({ selectedRegion, dateRange }) {
-  const getDateRange = () => {
-    switch (dateRange) {
-      case "7":
-        return "Last 7 days";
-      case "30":
-        return "Last 30 days";
-      case "90":
-        return "Last 90 days";
-      case "365":
-        return "This year";
-      default:
-        return null;
-    }
-  };
-
+function RegionPieChart({ selectedRegion }) {
   const query = {
     measures: ["FactSales.count"],
     dimensions: ["Region.regionName"],
@@ -45,24 +30,13 @@ function RegionPieChart({ selectedRegion, dateRange }) {
     ];
   }
 
-  const range = getDateRange();
-
-  if (range) {
-    query.timeDimensions = [
-      {
-        dimension: "FactSales.saleDate",
-        dateRange: range,
-      },
-    ];
-  }
-
   const { resultSet, isLoading, error } = useCubeQuery(query);
 
   if (isLoading) {
     return (
       <div
         style={{
-          height: 300,
+          height: 280,
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
@@ -76,16 +50,8 @@ function RegionPieChart({ selectedRegion, dateRange }) {
 
   if (error) {
     return (
-      <div
-        style={{
-          height: 300,
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          color: "#ff6b6b",
-        }}
-      >
-        Failed to load region analytics.
+      <div style={{ color: "#ff6b6b" }}>
+        Error loading region analytics.
       </div>
     );
   }
@@ -95,14 +61,16 @@ function RegionPieChart({ selectedRegion, dateRange }) {
   const labels = rows.map((row) => row["Region.regionName"]);
 
   const values = rows.map((row) =>
-    Number(row["FactSales.count"] || 0)
+    Number(row["FactSales.count"])
   );
 
   const data = {
     labels,
+
     datasets: [
       {
         data: values,
+
         backgroundColor: [
           "#D4AF37",
           "#B08D2E",
@@ -111,8 +79,11 @@ function RegionPieChart({ selectedRegion, dateRange }) {
           "#E6C766",
           "#9F7B1D",
         ],
+
         borderColor: "#141414",
+
         borderWidth: 2,
+
         hoverOffset: 12,
       },
     ],
@@ -120,33 +91,50 @@ function RegionPieChart({ selectedRegion, dateRange }) {
 
   const options = {
     responsive: true,
+
     maintainAspectRatio: false,
+
     cutout: "68%",
 
     plugins: {
       legend: {
         position: "bottom",
+
         labels: {
           color: "#d6d6d6",
+
           padding: 20,
+
           usePointStyle: true,
+
           pointStyle: "circle",
         },
       },
 
       tooltip: {
         backgroundColor: "#141414",
+
         borderColor: "#d4af37",
+
         borderWidth: 1,
+
         titleColor: "#d4af37",
+
         bodyColor: "#ffffff",
       },
     },
   };
 
   return (
-    <div style={{ height: "300px" }}>
-      <Doughnut data={data} options={options} />
+    <div
+      style={{
+        height: "300px",
+      }}
+    >
+      <Doughnut
+        data={data}
+        options={options}
+      />
     </div>
   );
 }

@@ -18,28 +18,10 @@ ChartJS.register(
   Legend
 );
 
-function ProductBarChart({ selectedRegion, dateRange }) {
-  const getDateRange = () => {
-    switch (dateRange) {
-      case "7":
-        return "Last 7 days";
-      case "30":
-        return "Last 30 days";
-      case "90":
-        return "Last 90 days";
-      case "365":
-        return "This year";
-      default:
-        return null;
-    }
-  };
-
+function ProductBarChart({ selectedRegion }) {
   const query = {
     measures: ["FactSales.totalRevenue"],
     dimensions: ["Product.productName"],
-    order: {
-      "FactSales.totalRevenue": "desc",
-    },
   };
 
   if (selectedRegion !== "") {
@@ -52,24 +34,13 @@ function ProductBarChart({ selectedRegion, dateRange }) {
     ];
   }
 
-  const range = getDateRange();
-
-  if (range) {
-    query.timeDimensions = [
-      {
-        dimension: "FactSales.saleDate",
-        dateRange: range,
-      },
-    ];
-  }
-
   const { resultSet, isLoading, error } = useCubeQuery(query);
 
   if (isLoading) {
     return (
       <div
         style={{
-          height: 350,
+          height: 320,
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
@@ -83,37 +54,44 @@ function ProductBarChart({ selectedRegion, dateRange }) {
 
   if (error) {
     return (
-      <div
-        style={{
-          height: 350,
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          color: "#ff6b6b",
-        }}
-      >
-        Failed to load product analytics.
+      <div style={{ color: "#ff6b6b" }}>
+        Error loading product chart.
       </div>
     );
   }
 
   const rows = resultSet ? resultSet.tablePivot() : [];
 
-  const labels = rows.map((row) => row["Product.productName"]);
+  const labels = rows.map(
+    (row) => row["Product.productName"]
+  );
 
   const revenue = rows.map((row) =>
-    Number(row["FactSales.totalRevenue"] || 0)
+    Number(row["FactSales.totalRevenue"])
   );
 
   const data = {
     labels,
+
     datasets: [
       {
         label: "Revenue",
+
         data: revenue,
-        backgroundColor: "#D4AF37",
+
+        backgroundColor: [
+          "#D4AF37",
+          "#C59D2C",
+          "#B58D24",
+          "#A57D1E",
+          "#8E6B19",
+          "#7A5C15",
+        ],
+
         borderRadius: 10,
+
         borderSkipped: false,
+
         maxBarThickness: 55,
       },
     ],
@@ -121,6 +99,7 @@ function ProductBarChart({ selectedRegion, dateRange }) {
 
   const options = {
     responsive: true,
+
     maintainAspectRatio: false,
 
     plugins: {
@@ -130,15 +109,19 @@ function ProductBarChart({ selectedRegion, dateRange }) {
 
       tooltip: {
         backgroundColor: "#141414",
+
         borderColor: "#d4af37",
+
         borderWidth: 1,
+
         titleColor: "#d4af37",
+
         bodyColor: "#ffffff",
 
         callbacks: {
           label(context) {
             return (
-              "Revenue: ₹ " +
+              "Revenue : ₹ " +
               Number(context.raw).toLocaleString()
             );
           },
@@ -176,8 +159,15 @@ function ProductBarChart({ selectedRegion, dateRange }) {
   };
 
   return (
-    <div style={{ height: "350px" }}>
-      <Bar data={data} options={options} />
+    <div
+      style={{
+        height: "350px",
+      }}
+    >
+      <Bar
+        data={data}
+        options={options}
+      />
     </div>
   );
 }

@@ -22,35 +22,18 @@ ChartJS.register(
   Legend
 );
 
-function RevenueChart({ selectedRegion, dateRange }) {
-  const getDateRange = () => {
-    switch (dateRange) {
-      case "7":
-        return "Last 7 days";
-      case "30":
-        return "Last 30 days";
-      case "90":
-        return "Last 90 days";
-      case "365":
-        return "This year";
-      default:
-        return null;
-    }
-  };
-
+function RevenueChart({ selectedRegion }) {
   const query = {
     measures: [
       "FactSales.totalRevenue",
       "FactSales.totalCost",
     ],
-
     timeDimensions: [
       {
         dimension: "FactSales.saleDate",
         granularity: "day",
       },
     ],
-
     order: {
       "FactSales.saleDate": "asc",
     },
@@ -66,15 +49,9 @@ function RevenueChart({ selectedRegion, dateRange }) {
     ];
   }
 
-  const range = getDateRange();
-
-  if (range) {
-    query.timeDimensions[0].dateRange = range;
-  }
-
   const { resultSet, isLoading, error } = useCubeQuery(query);
 
-  if (isLoading) {
+  if (isLoading)
     return (
       <div
         style={{
@@ -88,23 +65,13 @@ function RevenueChart({ selectedRegion, dateRange }) {
         Loading Sales Analytics...
       </div>
     );
-  }
 
-  if (error) {
+  if (error)
     return (
-      <div
-        style={{
-          color: "#ff6b6b",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: 350,
-        }}
-      >
-        Failed to load revenue analytics.
+      <div style={{ color: "#ff6b6b" }}>
+        {error.toString()}
       </div>
     );
-  }
 
   const rows = resultSet ? resultSet.chartPivot() : [];
 
@@ -127,25 +94,23 @@ function RevenueChart({ selectedRegion, dateRange }) {
 
   const data = {
     labels,
-
     datasets: [
       {
         label: "Revenue",
         data: revenue,
         borderColor: "#d4af37",
-        backgroundColor: "rgba(212,175,55,.12)",
+        backgroundColor: "rgba(212,175,55,0.15)",
         borderWidth: 3,
-        tension: 0.35,
-        fill: true,
+        tension: 0.4,
+        fill: false,
       },
-
       {
         label: "Profit",
         data: profit,
         borderColor: "#38bdf8",
-        backgroundColor: "rgba(56,189,248,.10)",
+        backgroundColor: "rgba(56,189,248,0.15)",
         borderWidth: 3,
-        tension: 0.35,
+        tension: 0.4,
         fill: false,
       },
     ],
@@ -154,11 +119,6 @@ function RevenueChart({ selectedRegion, dateRange }) {
   const options = {
     responsive: true,
     maintainAspectRatio: false,
-
-    interaction: {
-      mode: "index",
-      intersect: false,
-    },
 
     plugins: {
       legend: {
@@ -185,10 +145,6 @@ function RevenueChart({ selectedRegion, dateRange }) {
         ticks: {
           color: "#bfbfbf",
         },
-
-        grid: {
-          color: "rgba(255,255,255,.05)",
-        },
       },
 
       y: {
@@ -201,20 +157,13 @@ function RevenueChart({ selectedRegion, dateRange }) {
             return "₹" + Number(value).toLocaleString();
           },
         },
-
-        grid: {
-          color: "rgba(255,255,255,.05)",
-        },
       },
     },
   };
 
   return (
     <div style={{ height: 380 }}>
-      <Line
-        data={data}
-        options={options}
-      />
+      <Line data={data} options={options} />
     </div>
   );
 }
