@@ -9,6 +9,7 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
+  BrainCircuit,
 } from "lucide-react";
 
 const menuItems = [
@@ -57,7 +58,13 @@ function Sidebar() {
       }}
     >
       <div className="sidebar-top">
-        <div className="logo-box">MM</div>
+        <div className="logo-box">
+          <BrainCircuit
+            size={30}
+            color="#111"
+            strokeWidth={2.5}
+          />
+        </div>
 
         {!collapsed && (
           <div>
