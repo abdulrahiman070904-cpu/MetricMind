@@ -12,29 +12,23 @@ import RegionPieChart from "../components/RegionPieChart";
 import ProductBarChart from "../components/ProductBarChart";
 
 function Dashboard() {
-  const [stats, setStats] = useState(null);
+  const [stats, setStats] = useState({
+    revenue: 0,
+    cost: 0,
+    sales: 0,
+    quantity: 0,
+  });
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   const [selectedRegion, setSelectedRegion] = useState("");
   const [dateRange, setDateRange] = useState("all");
 
-  const getDateRange = () => {
-    switch (dateRange) {
-      case "7":
-        return "Last 7 days";
-      case "30":
-        return "Last 30 days";
-      case "90":
-        return "Last 90 days";
-      case "365":
-        return "This year";
-      default:
-        return null;
-    }
-  };
-
-  const loadDashboard = async () => {
+  // ==========================================
+  // LOAD DASHBOARD DATA
+  // ==========================================
+  async function loadDashboard() {
     try {
       setLoading(true);
       setError("");
@@ -49,7 +43,8 @@ function Dashboard() {
         filters: [],
       };
 
-      if (selectedRegion !== "") {
+      // Region filter
+      if (selectedRegion) {
         query.filters.push({
           member: "Region.regionName",
           operator: "equals",
@@ -57,43 +52,64 @@ function Dashboard() {
         });
       }
 
-      const range = getDateRange();
-
-      if (range) {
-        query.timeDimensions = [
-          {
-            dimension: "FactSales.saleDate",
-            dateRange: range,
-          },
-        ];
-      }
+      console.log("Dashboard Query:", query);
 
       const resultSet = await cubejsApi.load(query);
 
-      const row = resultSet.rawData()[0] || {};
+      const data = resultSet.rawData();
+
+      console.log("Dashboard Cube Data:", data);
+
+      const row = data[0] || {};
 
       setStats({
-        sales: Number(row["FactSales.count"] || 0),
         revenue: Number(row["FactSales.totalRevenue"] || 0),
         cost: Number(row["FactSales.totalCost"] || 0),
+        sales: Number(row["FactSales.count"] || 0),
         quantity: Number(row["FactSales.totalQuantity"] || 0),
       });
     } catch (err) {
-      console.error(err);
+      console.error("Dashboard error:", err);
       setError("Unable to load dashboard.");
     } finally {
       setLoading(false);
     }
-  };
+  }
 
+  // ==========================================
+  // LOAD DATA WHEN FILTERS CHANGE
+  // ==========================================
   useEffect(() => {
+   useEffect(() => {
+  loadDashboard();
+
+  const interval = setInterval(() => {
     loadDashboard();
+  }, 60000);
 
-    const interval = setInterval(loadDashboard, 60000);
+  return () => {
+    clearInterval(interval);
+  };
+}, [selectedRegion, dateRange]);
 
-    return () => clearInterval(interval);
-  }, [selectedRegion, dateRange]);
+  // ==========================================
+  // CALCULATIONS
+  // ==========================================
+  const profit = stats.revenue - stats.cost;
 
+  const profitMargin =
+    stats.revenue > 0
+      ? ((profit / stats.revenue) * 100).toFixed(1)
+      : "0.0";
+
+  const averageOrderValue =
+    stats.sales > 0
+      ? Math.round(stats.revenue / stats.sales)
+      : 0;
+
+  // ==========================================
+  // LOADING SCREEN
+  // ==========================================
   if (loading) {
     return (
       <div className="loading-screen">
@@ -103,6 +119,9 @@ function Dashboard() {
     );
   }
 
+  // ==========================================
+  // ERROR SCREEN
+  // ==========================================
   if (error) {
     return (
       <div className="loading-screen">
@@ -113,7 +132,7 @@ function Dashboard() {
         <button
           onClick={loadDashboard}
           style={{
-            marginTop: 20,
+            marginTop: "20px",
             padding: "12px 24px",
             cursor: "pointer",
           }}
@@ -124,25 +143,19 @@ function Dashboard() {
     );
   }
 
-  const profit = stats.revenue - stats.cost;
-
-  const profitMargin =
-    stats.revenue === 0
-      ? 0
-      : ((profit / stats.revenue) * 100).toFixed(1);
-
-  const averageOrderValue =
-    stats.sales === 0
-      ? 0
-      : (stats.revenue / stats.sales).toFixed(0);
-
+  // ==========================================
+  // DASHBOARD
+  // ==========================================
   return (
     <main className="dashboard">
+
+      {/* HEADER */}
       <Header
         title="Dashboard"
         subtitle="Executive Business Intelligence Dashboard"
       />
 
+      {/* FILTERS */}
       <div
         className="filter-bar"
         style={{
@@ -168,25 +181,27 @@ function Dashboard() {
         />
       </div>
 
+      {/* KPI CARDS */}
       <section className="kpi-grid">
+
         <KPICard
           title="TOTAL REVENUE"
-          value={`₹ ${stats.revenue.toLocaleString()}`}
+          value={`₹ ${stats.revenue.toLocaleString("en-IN")}`}
         />
 
         <KPICard
           title="TOTAL PROFIT"
-          value={`₹ ${profit.toLocaleString()}`}
+          value={`₹ ${profit.toLocaleString("en-IN")}`}
         />
 
         <KPICard
           title="TOTAL ORDERS"
-          value={stats.sales.toLocaleString()}
+          value={stats.sales.toLocaleString("en-IN")}
         />
 
         <KPICard
           title="TOTAL QUANTITY"
-          value={stats.quantity.toLocaleString()}
+          value={stats.quantity.toLocaleString("en-IN")}
         />
 
         <KPICard
@@ -196,27 +211,42 @@ function Dashboard() {
 
         <KPICard
           title="AVG ORDER VALUE"
-          value={`₹ ${Number(averageOrderValue).toLocaleString()}`}
+          value={`₹ ${averageOrderValue.toLocaleString("en-IN")}`}
         />
+
       </section>
 
+      {/* EXECUTIVE SUMMARY + REVENUE */}
       <section className="main-grid">
-        <div className="summary-panel">
-          <h2 className="panel-title">Executive Summary</h2>
 
-          <SummaryCard stats={stats} />
+        <div className="summary-panel">
+
+          <h2 className="panel-title">
+            Executive Summary
+          </h2>
+
+          <SummaryCard
+            stats={stats}
+          />
+
         </div>
 
         <div className="revenue-panel">
-          <h2 className="panel-title">Revenue Trend</h2>
+
+          <h2 className="panel-title">
+            Revenue Trend
+          </h2>
 
           <RevenueChart
             selectedRegion={selectedRegion}
             dateRange={dateRange}
           />
+
         </div>
+
       </section>
 
+      {/* INSIGHTS + FORECAST */}
       <section
         style={{
           display: "grid",
@@ -225,29 +255,48 @@ function Dashboard() {
           marginTop: "30px",
         }}
       >
-        <ExecutiveInsights stats={stats} />
-        <ForecastCard stats={stats} />
+
+        <ExecutiveInsights
+          stats={stats}
+        />
+
+        <ForecastCard
+          stats={stats}
+        />
+
       </section>
 
+      {/* REGION + PRODUCT */}
       <section className="bottom-grid">
+
         <div className="region-panel">
-          <h2 className="panel-title">Region Distribution</h2>
+
+          <h2 className="panel-title">
+            Region Distribution
+          </h2>
 
           <RegionPieChart
             selectedRegion={selectedRegion}
             dateRange={dateRange}
           />
+
         </div>
 
         <div className="product-panel">
-          <h2 className="panel-title">Product Performance</h2>
+
+          <h2 className="panel-title">
+            Product Performance
+          </h2>
 
           <ProductBarChart
             selectedRegion={selectedRegion}
             dateRange={dateRange}
           />
+
         </div>
+
       </section>
+
     </main>
   );
 }
